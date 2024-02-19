@@ -1,3 +1,4 @@
+#include <atomic>
 #include <condition_variable>
 #include <iostream>
 #include <mutex>
@@ -15,34 +16,34 @@ class Queue {
   auto operator=(const Queue &&other) -> Queue & = delete;
 
   bool empty() {
-    std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx_);
     return q_.empty();
   }
 
   int size() {
-    std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx_);
     return q_.size();
   }
 
   void push(T &value) {
-    std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx_);
     q_.emplace(value);
   }
 
   void push(T &&value) {
-    std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx_);
     q_.emplace(std::move(value));
   }
 
   bool pop(T &value) {
-    std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(mtx_);
     if (q_.empty()) {
       return false;
     }
 
     value = std::move(q_.front());
     q_.pop();
-    retrun true;
+    return true;
   }
 
  private:
@@ -63,7 +64,7 @@ class ProducerConsumer {
   ProducerConsumer(int q_maxsize, int producer_num, int consumer_num)
       : q_maxsize_(q_maxsize),
         producer_threads_(producer_num),
-        consumer_num(consumer_num),
+        consumer_threads_(producer_num),
         status_(true) {
     initialize();
   }
@@ -91,7 +92,7 @@ class ProducerConsumer {
   std::condition_variable q_notempty_cv_;
   std::vector<std::thread> producer_threads_;
   std::vector<std::thread> consumer_threads_;
-  std::mutex mutex;
+  std::mutex mutex_;
 
   std::atomic<bool> status_;
 
@@ -99,23 +100,23 @@ class ProducerConsumer {
     for (auto &thread : producer_threads_) {
       thread = std::thread(&ProducerConsumer::producer, this);
     }
-    for (auto &thread : producer_threads_) {
+    for (auto &thread : consumer_threads_) {
       thread = std::thread(&ProducerConsumer::consumer, this);
     }
   }
 
   bool isFull() {
     if (q_.size() >= q_maxsize_) {
-      return ture;
+      return true;
     }
     return false;
   }
 
   void producer() {
     while (status_) {
-      std::unique_lock<std::mutex> locker(mutex);
+      std::unique_lock<std::mutex> lock(mutex_);
 
-      if (isFull()) {
+      while (isFull()) {
         std::cout << "queue is full, waiting for q_notfull_cv_\n";
         q_notfull_cv_.wait(lock);
       }
@@ -130,14 +131,14 @@ class ProducerConsumer {
 
   void consumer() {
     while (status_) {
-      std::unique_lock<std::mutex> lock(mutex);
-
-      if (q.empty()) {
+      std::unique_lock<std::mutex> lock(mutex_);
+      int count = 0;
+      while (q_.empty()) {
         std::cout << "queue is empty, waiting for q_notempy_cv_\n";
         q_notempty_cv_.wait(lock);
       }
 
-      if (!q.empty()) {
+      if (!q_.empty()) {
         T value;
         bool result = q_.pop(value);
         value++;
@@ -149,4 +150,8 @@ class ProducerConsumer {
   }
 };
 
-int main() {}
+int main() {
+  auto pc = ProducerConsumer<int>(100, 5, 4);
+  while (true) {
+  }
+}
