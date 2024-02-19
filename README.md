@@ -40,3 +40,45 @@ sometimes we need to pass the data to multiple thread from current (after it the
 `std::async` automaticlly finish it
 
 # producer && consumer
+
+A example from [cppreference](https://en.cppreference.com/w/cpp/thread/condition_variable/wait).
+
+```cpp
+void waits() {
+  std::unique_lock<std::mutex> lk(cv_m);
+  std::cerr << "Waiting... \n";
+  cv.wait(lk, [] { return i == 1; });
+  std::cerr << "...finished waiting. i == 1\n";
+}
+
+void signals() {
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  {
+    std::lock_guard<std::mutex> lk(cv_m);
+    std::cerr << "Notifying...\n";
+  }
+  cv.notify_all();
+
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+
+  {
+    std::lock_guard<std::mutex> lk(cv_m);
+    i = 1;
+    std::cerr << "Notifying again...\n";
+  }
+  cv.notify_all();
+}
+```
+
+1. spurious wakeup. `If` that warrp the `wait` chage to `While`. 
+2. lost wakeup. the notification gets lost if the sender sends its notification before the receiver gets to a wait state. (sender's notification is invalid, it wake up nobody).
+
+## ref
+
+1. https://www.modernescpp.com/index.php/condition-variables/
+
+# threadpool
+
+a simple thread pool
+
+![](threadpool.png)
