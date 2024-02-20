@@ -81,4 +81,15 @@ void signals() {
 
 a simple thread pool
 
-![](threadpool.png)
+![](image/threadpool.png)
+
+
+# thread safe container
+
+## queue
+
+1. stl queue
+2. custom list
+
+
+## stack
