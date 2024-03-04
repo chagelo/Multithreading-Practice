@@ -1,20 +1,16 @@
-# synchronized-with
 
-`synchronized-with` 
+这六种内存约束符从读/写的角度进行划分的话，可以分为以下三种：
 
-# sequenced-before
+- 读操作(memory_order_acquire memory_order_consume)
+- 写操作(memory_order_release)
+- 读-修改-写操作(memory_order_acq_rel memory_order_seq_cst)
 
-单线程情况下的 `happens-before`
+举例来说，因为store是一个写操作，当调用store时，指定memory_order_relaxed或者memory_order_release或者memory_order_seq_cst是有意义的。而指定memory_order_acquire是没有意义的。
 
-a 的执行在 b 之前，且 a 执行后的结果 b 也能看到
-
-# happens-before
-
-操作 a `happens-before` 操作 b，则操作 a 的结果对于操作 b 可见，可以是单线程之间，也可以多线程两个操作之间
-
-# inter-thread-happens-before
-
-多线程情况下的 `happens-before`
+- synchronized-with，`synchronized-with` 
+- sequenced-before，单线程情况下的 `happens-before`，a 的执行在 b 之前，且 a 执行后的结果 b 也能看到
+- happens-before，操作 a `happens-before` 操作 b，则操作 a 的结果对于操作 b 可见，可以是单线程之间，也可以多线程两个操作之间
+- inter-thread-happens-before，多线程情况下的 `happens-before`
 
 # std::memory_order_relaxed
 
@@ -78,3 +74,5 @@ int main() {
 
 1. [C++ 并发编程(11) 原子操作和内存模型](https://www.bilibili.com/video/BV1m84y1d7rS)
 2. [C++ 内存模型](https://paul.pub/cpp-memory-model/)
+3. [通过内存顺序实现内存模型](https://gitbookcpp.llfc.club/sections/cpp/concurrent/concpp12.html)
+4. [聊聊内存模型和内存序](https://cloud.tencent.com/developer/article/2026043)
